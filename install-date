@@ -30,7 +30,7 @@ elif [[ -f /usr/bin/emerge ]]; then
     INSTALL_DATE="$(head -n 1 /var/log/emerge.log | cut -b 31-43)"
 # Fedora, RedHat, and RPM based distros
 elif [[ -f /usr/bin/rpm ]]; then
-    INSALL_DATE="$(rpm -qi basesystem | grep "Install Date" | sed 's/Install Date: //g')"
+    INSTALL_DATE="$(rpm -qi basesystem | grep "Install Date" | sed 's/Install Date: //g')"
 # Unknown distro
 else
     INSTALL_DATE="unknown"

@@ -32,7 +32,7 @@ elif [[ -f /usr/bin/emerge ]]; then
 elif [[ -f /usr/bin/rpm ]]; then
     INSTALL_DATE="$(rpm -qi basesystem | grep "Install Date" | sed 's/Install Date: //g')"
 # Unknown distro, determining by filesystem creation date (may not be reliable)
-elif [[ -f /usr/bin/stat ]]
+elif [[ -f /usr/bin/stat ]]; then
     INSTALL_DATE="$(stat -f / | grep -i "Birth" | sed 's/Birth: //g')"
 fi
 

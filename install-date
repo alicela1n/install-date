@@ -31,9 +31,9 @@ elif [[ -f /usr/bin/emerge ]]; then
 # Fedora, RedHat, and RPM based distros
 elif [[ -f /usr/bin/rpm ]]; then
     INSTALL_DATE="$(rpm -qi basesystem | grep "Install Date" | sed 's/Install Date: //g')"
-# Unknown distro
-else
-    INSTALL_DATE="unknown"
+# Unknown distro, determining by filesystem creation date (may not be reliable)
+elif [[ -f /usr/bin/stat ]]
+    INSTALL_DATE="$(stat -f / | grep -i "Birth" | sed 's/Birth: //g')"
 fi
 
 if [[ $INSTALL_DATE == "unknown" ]]; then

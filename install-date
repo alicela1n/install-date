@@ -18,28 +18,97 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # === Variables ===
+VERSION="0.1"
 PROGNAME="$(basename "${0}")"
 PACMAN_LOG="/var/log/pacman.log"
 PORTAGE_LOG="/var/log/emerge.log"
+SCRIPTPATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")" # Store canonical path of script
+ARGS="${@}" # Store copy of command line arguments
 
-# Getting the install date
+error() {
+    echo "Error: exiting" >&2
+    exit 1
+}
 
-# Arch Linux and Arch based distros
-if [[ -f /usr/bin/pacman ]]; then
-    INSTALL_DATE="$(head -n 1 /var/log/pacman.log | cut -b 2-11)"
-# Gentoo Linux and Gentoo based distros
-elif [[ -f /usr/bin/emerge ]]; then
-    INSTALL_DATE="$(head -n 1 /var/log/emerge.log | cut -b 31-43)"
-# Fedora, RedHat, and RPM based distros
-elif [[ -f /usr/bin/rpm ]]; then
-    INSTALL_DATE="$(rpm -qi basesystem | grep "Install Date" | sed 's/Install Date: //g')"
-# Unknown distro, determining by filesystem creation date (may not be reliable)
-elif [[ -f /usr/bin/stat ]]; then
-    INSTALL_DATE="$(stat / | grep "Birth" | sed 's/Birth: //g' | cut -b 2-11)"
-fi
+successful_quit() {
+    exit 0
+}
 
-if [[ $INSTALL_DATE == "unknown" ]]; then
-    echo "Unknown install date, distro probably unsupported!"
-else
-    echo $INSTALL_DATE
-fi
+get_install_date() {
+    # Using various methods to determine install date
+
+    # Using stat (command line option)
+    if [[ $STAT == "1" ]] ; then
+        INSTALL_DATE="$(stat / | grep "Birth" | sed 's/Birth: //g' | cut -b 2-11)"
+    # Arch Linux, and Arch based distros using pacman
+    elif [[ -f /usr/bin/pacman ]]; then
+        INSTALL_DATE="$(head -n 1 /var/log/pacman.log | cut -b 2-11)"
+    # Gentoo Linux and Gentoo based distros using portage
+    elif [[ -f /usr/bin/emerge ]]; then
+        INSTALL_DATE="$(head -n 1 /var/log/emerge.log | cut -b 31-43)"
+    # Fedora, RedHat, and RPM based distros
+    elif [[ -f /usr/bin/rpm ]]; then
+        INSTALL_DATE="$(rpm -qi basesystem | grep "Install Date" | sed 's/Install Date: //g')"
+    # Unknown distro, determining by filesystem creation date (may not be reliable)
+    elif [[ -f /usr/bin/stat ]]; then
+        INSTALL_DATE="$(stat / | grep "Birth" | sed 's/Birth: //g' | cut -b 2-11)"
+    fi
+}
+
+install_date() {
+    if [[ $INSTALL_DATE == "unknown" ]]; then
+        echo "Unknown install date, distro probably unsupported!"
+        error
+    else
+        echo $INSTALL_DATE
+        successful_quit
+    fi
+}
+
+usage() {
+    cat << EOF
+USAGE: ${PROGNAME} [options]
+No argument: Use various methods to determine install date
+
+Options:
+    -s, Use stat to tell install date via filesystem creation date
+    -v, Print version
+EOF
+}
+
+version() {
+    echo "${VERSION}"
+}
+
+process_command_line_arguments() {
+    local TEMP
+    declare -i RC
+    set +e
+        TEMP="$(getopt -n "${PROGNAME}" -o svh --long stat,version,help: -- "${@}")"
+        RC="${?}"
+    set -e
+    if ((RC!=0)); then
+        error
+    fi
+    eval set -- "${TEMP}"
+
+    while true; do
+        case "${1}" in
+            -v|--version) PRINT_VERSION=1; shift ;;
+            -s|--stat) STAT=1 ; shift ;;
+            -h|--help) USAGE=1; shift ;;
+            --) shift; break ;;
+            *) error "Internal error!" ;;
+        esac
+    done
+
+    if [[ $USAGE == 1 ]]; then
+        usage; successful_quit
+    elif [[ $PRINT_VERSION == 1 ]]; then
+        version; successful_quit
+    fi
+}
+
+process_command_line_arguments "${@}"
+get_install_date
+install_date

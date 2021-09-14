@@ -42,10 +42,10 @@ get_install_date() {
         INSTALL_DATE="$(stat / | grep "Birth" | sed 's/Birth: //g' | cut -b 2-11)"
     # Arch Linux, and Arch based distros using pacman
     elif [[ -f /usr/bin/pacman ]]; then
-        INSTALL_DATE="$(head -n 1 /var/log/pacman.log | cut -b 2-11)"
+        INSTALL_DATE="$(head -n 1 $PACMAN_LOG | cut -b 2-11)"
     # Gentoo Linux and Gentoo based distros using portage
     elif [[ -f /usr/bin/emerge ]]; then
-        INSTALL_DATE="$(head -n 1 /var/log/emerge.log | cut -b 31-43)"
+        INSTALL_DATE="$(head -n 1 $PORTAGE_LOG | cut -b 31-43)"
     # Fedora, RedHat, and RPM based distros
     elif [[ -f /usr/bin/rpm ]]; then
         INSTALL_DATE="$(rpm -qi basesystem | grep "Install Date" | sed 's/Install Date: //g')"
